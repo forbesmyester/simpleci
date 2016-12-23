@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+
+SIMPLECI_CONFIG_REPOS=($SIMPLECI_CONFIG_REPOS)
+for SIMPLECI_REPO in ${SIMPLECI_CONFIG_REPOS[@]}; do
+    SIMPLECI_URL="https://api.github.com/repos/${SIMPLECI_CONFIG_USER}/${SIMPLECI_REPO}/commits?access_token=${SIMPLECI_AUTH_TOKEN}"
+    if [ -z $SIMPLECI_AUTH_TOKEN ]; then
+        SIMPLECI_URL="https://api.github.com/repos/${SIMPLECI_CONFIG_USER}/${SIMPLECI_REPO}/commits"
+    fi
+    curl "${SIMPLECI_URL}" | jq -r ' . | map(.commit.author.date + " " + .sha)' | grep "\"" | sed 'sI.*"\(.*\)".*I\1I' | sed "s/$/ ${SIMPLECI_REPO}/" > "${SIMPLECI_CONFIG_STATE_DIR}/${SIMPLECI_REPO}.received.commits"
+done
+
+cat ${SIMPLECI_CONFIG_STATE_DIR}/*.received.commits | sort > "${SIMPLECI_CONFIG_STATE_DIR}/received.commits"
+
+for SIMPLECI_REPO in ${SIMPLECI_CONFIG_REPOS[@]}; do
+    rm "${SIMPLECI_CONFIG_STATE_DIR}/${SIMPLECI_REPO}.received.commits"
+done

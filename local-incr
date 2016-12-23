@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Not perfect, susceptable to race conditions.
+
+X=0
+if [ -e $SIMPLECI_CONFIG_STATE_DIR/${1}.incr ]; then
+    X=$(cat $SIMPLECI_CONFIG_STATE_DIR/${1}.incr)
+fi
+Y=$(( $X + 1 ))
+echo $Y > $SIMPLECI_CONFIG_STATE_DIR/${1}.incr
+echo $Y

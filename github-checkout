@@ -1,0 +1,6 @@
+#!/bin/bash
+
+git clone git@github.com:${SIMPLECI_CONFIG_USER}/${SIMPLECI_REPO}.git "${SIMPLECI_PROJECT_BUILD_DIR}"
+cd "${SIMPLECI_PROJECT_BUILD_DIR}"
+git checkout -b "${SIMPLECI_SHA}"
+rm -rf .git

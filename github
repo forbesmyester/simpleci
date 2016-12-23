@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Constants 
+# ---------
+SIMPLECI_METHOD=github
+
+SIMPLECI_CONST_INDEX_DATE=0
+SIMPLECI_CONST_INDEX_SHA=1
+SIMPLECI_CONST_INDEX_REPO=2
+SIMPLECI_CONST_SUCCESS=1
+SIMPLECI_CONST_FAILURE=0
+
+SIMPLECI_CONFIG_LOG_DIR="$PWD/store/log"
+SIMPLECI_CONFIG_BUILD_DIR="/tmp/store/build"
+SIMPLECI_CONFIG_STATE_DIR="$PWD/store/state"
+SIMPLECI_CONFIG_CONFIG_DIR="$PWD/store/config"
+
+# Config
+# ------
+SIMPLECI_CONFIG_REPOS="nwq nwq-example-application"
+SIMPLECI_CONFIG_USER=forbesmyester
+
+# Setup
+# -----
+mkdir -p $SIMPLECI_CONFIG_LOG_DIR
+mkdir -p $SIMPLECI_CONFIG_BUILD_DIR
+mkdir -p $SIMPLECI_CONFIG_STATE_DIR
+mkdir -p $SIMPLECI_CONFIG_CONFIG_DIR
+touch "${SIMPLECI_CONFIG_STATE_DIR}/tested.commits"
+
+# Build Index
+# -----------
+SIMPLECI_CONFIG_STATE_DIR="${SIMPLECI_CONFIG_STATE_DIR}" SIMPLECI_CONFIG_REPOS="$SIMPLECI_CONFIG_REPOS" SIMPLECI_CONFIG_USER="${SIMPLECI_CONFIG_USER}" ./${SIMPLECI_METHOD}-collate-commits
+SIMPLECI_TEMP=$?
+if [ "$SIMPLECI_TEMP" -ne "0" ]; then
+    exit $SIMPLECI_TEMP
+fi
+
+# Find a test to perform
+# ----------------------
+SIMPLECI_TODO=($(diff "${SIMPLECI_CONFIG_STATE_DIR}/received.commits" "${SIMPLECI_CONFIG_STATE_DIR}/tested.commits" | grep "<" | sed 's/^< //' | head -n1))
+SIMPLECI_REPO=${SIMPLECI_TODO[$SIMPLECI_CONST_INDEX_REPO]}
+SIMPLECI_SHA=${SIMPLECI_TODO[$SIMPLECI_CONST_INDEX_SHA]}
+SIMPLECI_DATE=${SIMPLECI_TODO[$SIMPLECI_CONST_INDEX_DATE]}
+SIMPLECI_BUILD_NUMBER=$(SIMPLECI_CONFIG_STATE_DIR="${SIMPLECI_CONFIG_STATE_DIR}" ./local-incr $SIMPLECI_REPO)
+SIMPLECI_TEMP=$?
+if [ "$SIMPLECI_TEMP" -ne "0" ]; then
+    exit $SIMPLECI_TEMP
+fi
+
+# If there are any .lock (as apposed to .build) then must exit.
+# -------------------------------------------------------------
+if [ "$(ls $SIMPLECI_CONFIG_LOG_DIR/ | grep lock$ | wc -l)" -ge "1" ]; then
+    echo "Exited due to lock file $(ls $SIMPLECI_CONFIG_LOG_DIR/ | grep lock$)"
+    exit 0
+fi
+
+# Lock to ensure nothing else is running
+# --------------------------------------
+SIMPLECI_LOG_FILENAME="${SIMPLECI_CONFIG_LOG_DIR}/${SIMPLECI_REPO}-${SIMPLECI_BUILD_NUMBER}.lock"
+echo "# Testing \`${SIMPLECI_REPO}\` on $(date) at SHA ${SIMPLECI_SHA}" >  ${SIMPLECI_LOG_FILENAME}
+echo "" >> "${SIMPLECI_LOG_FILENAME}"
+
+# Lock and Perform checkout
+# -------------------------
+echo '<div id="checkout" class="collapsed">' >> "${SIMPLECI_LOG_FILENAME}"
+echo "## Checkout" >>  ${SIMPLECI_LOG_FILENAME}
+SIMPLECI_PROJECT_BUILD_DIR="${SIMPLECI_CONFIG_BUILD_DIR}/${SIMPLECI_REPO}-${SIMPLECI_BUILD_NUMBER}"
+SIMPLECI_PROJECT_BUILD_DIR="${SIMPLECI_PROJECT_BUILD_DIR}" SIMPLECI_REPO="${SIMPLECI_REPO}" SIMPLECI_CONFIG_USER="${SIMPLECI_CONFIG_USER}" SIMPLECI_SHA="${SIMPLECI_SHA}" ./github-checkout >> "${SIMPLECI_LOG_FILENAME}"
+SIMPLECI_TEMP=$?
+if [ "$SIMPLECI_TEMP" -ne "0" ]; then
+    rm "${SIMPLECI_LOG_FILENAME}"
+    exit $SIMPLECI_TEMP
+fi
+echo '</div>' >> "${SIMPLECI_LOG_FILENAME}"
+echo '' >> "${SIMPLECI_LOG_FILENAME}"
+
+# Perform tests
+# -------------
+SIMPLECI_PROJECT_BUILD_DIR="$SIMPLECI_PROJECT_BUILD_DIR" SIMPLECI_CONFIG_CONFIG_DIR="$SIMPLECI_CONFIG_CONFIG_DIR" SIMPLECI_REPO="$SIMPLECI_REPO" ./github-pipeline >> ${SIMPLECI_LOG_FILENAME}
+SIMPLECI_RESULT=$?
+SIMPLECI_RESULT_DIR=${SIMPLECI_CONFIG_LOG_DIR}/$(echo $SIMPLECI_DATE | sed 's/^\([0-9]\+\-[0-9]\+\).*/\1/')
+SIMPLECI_RESULT_FILENAME=${SIMPLECI_RESULT_DIR}/${SIMPLECI_DATE}-${SIMPLECI_REPO}-${SIMPLECI_BUILD_NUMBER}-${SIMPLECI_SHA}-${SIMPLECI_RESULT}.result
+mkdir -p $SIMPLECI_RESULT_DIR
+mv $SIMPLECI_LOG_FILENAME $SIMPLECI_RESULT_FILENAME
+
+# Add tested to tests file
+# ------------------------
+echo "${SIMPLECI_DATE} ${SIMPLECI_SHA} ${SIMPLECI_REPO}" >> "${SIMPLECI_CONFIG_STATE_DIR}/tested.commits"
+
+# Cleanup (Only if no error)
+# --------------------------
+if [ "$SIMPLECI_RESULT" -eq "0" ]; then
+    rm -rf $SIMPLECI_WORKING_DIRECTORY
+fi

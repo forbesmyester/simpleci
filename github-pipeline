@@ -1,0 +1,29 @@
+#!/bin/bash
+
+SIMPLECI_PIPELINE_DIR="${SIMPLECI_CONFIG_CONFIG_DIR}/projects/${SIMPLECI_REPO}/pipeline/"
+mkdir -p "${SIMPLECI_PIPELINE_DIR}"
+SIMPLECI_TESTS=($(ls "$SIMPLECI_PIPELINE_DIR" | grep "^[0-9]\+-"))
+SIMPLECI_FAILED=0
+
+echo "Test Directory: \`${SIMPLECI_PROJECT_BUILD_DIR}\`"
+cd $SIMPLECI_PROJECT_BUILD_DIR
+for SIMPLECI_TEST in ${SIMPLECI_TESTS[@]}; do
+    echo ""
+    echo "## $SIMPLECI_TEST"
+    if [ "${SIMPLECI_FAILED}" -eq "0" ]; then
+        echo ""
+        echo "\`\`\`"
+        "${SIMPLECI_PIPELINE_DIR}/${SIMPLECI_TEST}" 2>&1
+        EXIT_STATUS=$?
+        echo "\`\`\`"
+        echo ""
+        echo "EXIT STATUS: ${EXIT_STATUS}"
+        if [ "${EXIT_STATUS}" -ne "0" ]; then
+            SIMPLECI_FAILED=1
+        fi
+    else
+        echo ""
+        echo "Skipping test due to previous failure"
+        echo ""
+    fi
+done
