@@ -2,6 +2,8 @@
 
 # Not perfect, susceptable to race conditions.
 
+set -e
+
 X=0
 if [ -e $SIMPLECI_CONFIG_STATE_DIR/${1}.incr ]; then
     X=$(cat $SIMPLECI_CONFIG_STATE_DIR/${1}.incr)
