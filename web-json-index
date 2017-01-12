@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SIMPLECI_LOG_KEYS=("date" "repo" "build_number" "sha" "result")
+
+SIMPLECI_JSON="["
+
+SIMPLECI_LOG=$(ls -r -d -1 $SIMPLECI_CONFIG_LOG_DIR/*/* | head -n 100)
+for SIMPLECI_LOGLINE in $SIMPLECI_LOG; do
+    SIMPLECI_LOGARRAY=($(echo "$SIMPLECI_LOGLINE" | sed 's!.*/!!' | sed 's!^\([^Z]\+Z\)-\(.*\)-\([0-9]\+\)\-\([0-9a-f]\+\)\-\([0-9]\+\)\.result!\1 \2 \3 \4 \5!'))
+    SIMPLECI_JSON_EL=""
+    for SIMPLECI_JSON_INDEX in $(seq 0 4); do
+        SIMPLECI_JSON_EL="${SIMPLECI_JSON_EL},\"${SIMPLECI_LOG_KEYS[$SIMPLECI_JSON_INDEX]}\":\"${SIMPLECI_LOGARRAY[$SIMPLECI_JSON_INDEX]}\""
+    done
+    SIMPLECI_JSON="${SIMPLECI_JSON}$(echo $SIMPLECI_JSON_EL | sed 'sI^.I{I' | sed 'sI$I}I'),"
+done
+SIMPLECI_JSON=$(echo $SIMPLECI_JSON | sed 'sI.$I]I')
+echo $SIMPLECI_JSON
