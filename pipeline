@@ -13,10 +13,11 @@ for SIMPLECI_TEST in ${SIMPLECI_TESTS[@]}; do
     echo "## $SIMPLECI_TEST"
     if [ "${SIMPLECI_FAILED}" -eq "0" ]; then
         echo ""
-        echo "\`\`\`"
-        "${SIMPLECI_PIPELINE_DIR}/${SIMPLECI_TEST}" 2>&1
+        TMP=$(mktemp)
+        ${SIMPLECI_PIPELINE_DIR}/${SIMPLECI_TEST} > $TMP 2>&1
         EXIT_STATUS=$?
-        echo "\`\`\`"
+        cat $TMP | sed 's/^/    /'
+        rm $TMP
         echo ""
         echo "EXIT STATUS: ${EXIT_STATUS}"
         if [ "${EXIT_STATUS}" -ne "0" ]; then
