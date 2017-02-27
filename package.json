@@ -1,0 +1,29 @@
+{
+  "name": "simpleci",
+  "version": "0.9.0",
+  "description": "How simple, in code, config and setup is it possible for a CI system to be?",
+  "main": "server.js",
+  "scripts": {
+    "test": "node ./server.js test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forbesmyester/simpleci.git"
+  },
+  "keywords": [
+    "ci"
+  ],
+  "author": "Matthew Forrester <github.com@speechmarks.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/forbesmyester/simpleci/issues"
+  },
+  "homepage": "https://github.com/forbesmyester/simpleci#readme",
+  "dependencies": {
+    "async": "^2.1.5",
+    "express": "^4.14.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}

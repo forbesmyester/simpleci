@@ -1,0 +1,24 @@
+# Testing `nwq` on Fri 24 Feb 18:43:34 GMT 2017 at SHA 3db02ddb4416a8d68908341aadcc598a3741ca40
+
+<div id="checkout" class="collapsed">
+## Checkout
+</div>
+
+Test Directory: `/tmp/store/build/nwq-5`
+
+## 01-ls
+
+    Dockerfile.docker-test
+    docker-test
+    lib
+    package.json
+    README.md
+    test
+
+EXIT STATUS: 0
+
+## 02-exit-1
+
+    WILL NOW ERROR
+
+EXIT STATUS: 1

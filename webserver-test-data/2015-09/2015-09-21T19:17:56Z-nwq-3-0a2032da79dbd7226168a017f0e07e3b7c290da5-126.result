@@ -1,0 +1,13 @@
+# Testing `nwq` on Fri 24 Feb 18:41:02 GMT 2017 at SHA 0a2032da79dbd7226168a017f0e07e3b7c290da5
+
+<div id="checkout" class="collapsed">
+## Checkout
+</div>
+
+Test Directory: `/tmp/store/build/nwq-3`
+
+## 01-ls
+
+    ./pipeline: line 17: /home/fozz/Projects/simpleci/store/config/projects/nwq/pipeline//01-ls: Permission denied
+
+EXIT STATUS: 126
