@@ -126,11 +126,26 @@ function getLog(yearMonth, next) {
     )
 })();
 
-// testGetLogNowAndDate();
-// testGetLogNowAndDate();
+function serve(f) {
+    return function(req, res) {
+        f(function(err, results) {
+            var match;
+            if (err) {
+                if (match = err.constructor.name.match(/(\d+)$/)) {
+                    return res.status(match[1]).json({ error: err.message});
+                }
+                return res.status(match[1]).json({ error: err.message});
+            }
+            res.json(results);
+        });
+    }
+}
  
-app.get('/log.json', function (req, res) {
-})
+app.get('/api/', serve(getLog.bind(null, undefined)));
+app.get('/api/:ym', function(req, res) {
+    let handler = serve(getLog.bind(null, req.params.ym));
+    handler(req, res);
+});
  
 if (process.argv[2] !== 'test') {
     app.listen(LISTEN_PORT);
