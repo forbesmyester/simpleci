@@ -56,10 +56,18 @@ function getMonth(testFilename) {
     return testFilename.split('-').slice(0, 2).join('-');
 }
 
+function readLogDir(dir, next) {
+    let d = SIMPLECI_CONFIG_LOG_DIR;
+    if (dir) {
+        d = path.join(SIMPLECI_CONFIG_LOG_DIR, dir);
+    }
+    return fs.readdir(d, next)
+}
+
 function getLog(yearMonth, next) {
 
     var tasks = [
-        fs.readdir.bind(null, SIMPLECI_CONFIG_LOG_DIR),
+        readLogDir.bind(null, null),
         wrapReturner(function getSubDirToRead(dirs) {
             function f(dirName) {
                 if (yearMonth === undefined) { return true; }
@@ -75,12 +83,7 @@ function getLog(yearMonth, next) {
 
             return filteredDirs.sort().pop();
         }),
-        wrapReturner(function getFullDirToRead(dir) {
-            return path.join(SIMPLECI_CONFIG_LOG_DIR, dir);
-        }),
-        function listTestDir(fullDir, next) {
-            fs.readdir(fullDir, next);
-        },
+        readLogDir,
         wrapReturner(function presentResults(dirList) {
             var r = { month: getMonth(dirList[0]), integrations: [] };
             r.integrations = dirList.map(testMapper);
