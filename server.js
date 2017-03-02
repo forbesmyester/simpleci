@@ -39,7 +39,6 @@ function getExitStatusFromTestFilename(testFilename) {
 }
 
 function testMapper(testFilename) {
-    // '2015-09-20T18:38:51Z-nwq-1-a72b9cde9aba1fdf83fc800b3e260bb6e3bb7173-0.result
     
     var splitted = testFilename.split('-');
     return {
@@ -64,6 +63,11 @@ function readLogDir(dir, next) {
     return fs.readdir(d, next)
 }
 
+function readLogFile(dir, filename, next) {
+    var d = path.join(SIMPLECI_CONFIG_LOG_DIR, dir, filename);
+    fs.readFile(d, { encoding: 'utf8' }, next);
+}
+
 function getLog(yearMonth, next) {
 
     var tasks = [
@@ -83,20 +87,24 @@ function getLog(yearMonth, next) {
 
             return filteredDirs.sort().pop();
         }),
-        readLogDir,
-        wrapReturner(function presentResults(dirList) {
-            var r = { month: getMonth(dirList[0]), integrations: [] };
-            r.integrations = dirList.map(testMapper);
-            return r;
-        })
+        readLogDir
     ];
 
     async.waterfall(tasks, next);
 }
 
+function presentLog(yearMonth, next) {
+    getLog(yearMonth, function(err, log) {
+        if (err) { return next(err); }
+        var r = { month: getMonth(log[0]), integrations: [] };
+        r.integrations = log.map(testMapper);
+        return next(err, r);
+    });
+}
+
 (function testGetLogInvalid() {
     var expected = {};
-    getLog('i-do-not-exist', function(err, result) {
+    presentLog('i-do-not-exist', function(err, result) {
         assert.equal(err.message, 'No test results found');
         assert(err instanceof Error404);
     });
@@ -116,9 +124,8 @@ function getLog(yearMonth, next) {
 
     async.parallel(
         {
-            'undefined': getLog.bind(null, undefined),
-            '2015-09': getLog.bind(null, undefined),
-            // 'does-not-exist': getLog.bind(null, undefined)
+            'undefined': presentLog.bind(null, undefined),
+            '2015-09': presentLog.bind(null, undefined),
         },
         function(err, results) {
             assert.equal(err, null);
@@ -137,9 +144,15 @@ function serve(f) {
                 if (match = err.constructor.name.match(/(\d+)$/)) {
                     return res.status(match[1]).json({ error: err.message});
                 }
-                return res.status(match[1]).json({ error: err.message});
+                console.log(err);
+                return res.status(500).json({
+                    error: getEnvVar('NODE_ENV') == 'development' ? err.message : 'Error'
+                });
             }
-            res.json(results);
+            if (typeof results == 'string') {
+                return res.send(results);
+            }
+            return res.json(results);
         });
     }
 }
@@ -151,14 +164,39 @@ function getFileServeFn(filename) {
         });
     };
 }
+
+function presentTest(yearMonth, id, next) {
+    getLog(yearMonth, function(err, log) {
+        function filter(filename) {
+            ob = testMapper(filename);
+            if (id.match(/^[\d+]$/)) {
+                return ob.run == id;
+            }
+            return ob.id == id;
+        }
+
+        var filteredResults = log.filter(filter);
+        if (filteredResults.length == 0) {
+            return next(new Error404('No test found'));
+        }
+        readLogFile(
+            yearMonth,
+            filteredResults[0]
+        , next);
+    });
+}
  
 app.get('/', getFileServeFn('index.html'));
 app.get('/index.html', getFileServeFn('index.html'));
 app.get('/index.js', getFileServeFn('index.js'));
 
-app.get('/api/', serve(getLog.bind(null, undefined)));
+app.get('/api/', serve(presentLog.bind(null, undefined)));
 app.get('/api/:ym', function(req, res) {
-    let handler = serve(getLog.bind(null, req.params.ym));
+    let handler = serve(presentLog.bind(null, req.params.ym));
+    handler(req, res);
+});
+app.get('/api/:ym/:id', function(req, res) {
+    var handler = serve(presentTest.bind(null, req.params.ym, req.params.id));
     handler(req, res);
 });
  
