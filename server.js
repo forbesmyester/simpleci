@@ -143,7 +143,19 @@ function serve(f) {
         });
     }
 }
+
+function getFileServeFn(filename) {
+    return function(req, res) {
+        fs.readFile(filename, { encoding: 'utf8' }, function(err, index) {
+            res.send(index);
+        });
+    };
+}
  
+app.get('/', getFileServeFn('index.html'));
+app.get('/index.html', getFileServeFn('index.html'));
+app.get('/index.js', getFileServeFn('index.js'));
+
 app.get('/api/', serve(getLog.bind(null, undefined)));
 app.get('/api/:ym', function(req, res) {
     let handler = serve(getLog.bind(null, req.params.ym));
