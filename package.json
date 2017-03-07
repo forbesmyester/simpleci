@@ -21,7 +21,8 @@
   "homepage": "https://github.com/forbesmyester/simpleci#readme",
   "dependencies": {
     "async": "^2.1.5",
-    "express": "^4.14.1"
+    "express": "^4.14.1",
+    "spectre.css": "^0.2.7"
   },
   "devDependencies": {
     "nodemon": "^1.11.0"

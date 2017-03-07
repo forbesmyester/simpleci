@@ -1,9 +1,30 @@
 <html>
 <head>
   <title>Simple CI</title>
+  <link rel="stylesheet" href="node_modules/spectre.css/dist/spectre.css">
+  <script src="./vue.js"></script>
   <script src="./index.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      renderMain();
+    });
+  </script>
 </head>
 <body>
 <p>Welcome to Simple CI</p>
+<div id="app">
+  <section v-for="integrationSet in index">
+  <ol>
+    <li clas="integration" v-for="integration in integrationSet.integrations">
+      <div v-bind:class="{ ok: integration.result == 0, fail: integration.result, result: true }">
+        {{ integration.result }}
+      </div>
+      <div class="project-info"><a href="#" v-on:click="show(integration.project, integration.run)">{{ integration.project }}-{{ integration.run }}</a></div>
+      <div class="commit-info">Commit {{ integration.id }} at {{ integration.date }}</div>
+      </div>
+    </li>
+  </ol>
+  </section>
+</div>
 </body>
 </html>

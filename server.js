@@ -97,7 +97,7 @@ function presentLog(yearMonth, next) {
     getLog(yearMonth, function(err, log) {
         if (err) { return next(err); }
         var r = { month: getMonth(log[0]), integrations: [] };
-        r.integrations = log.map(testMapper);
+        r.integrations = log.map(testMapper).reverse();
         return next(err, r);
     });
 }
@@ -114,11 +114,11 @@ function presentLog(yearMonth, next) {
     var expected = {
         month: "2015-09",
         integrations: [
-            { date: '2015-09-20T18:38:51Z', project: 'nwq', run: 1, result: 0,   id: 'a72b9cde9aba1fdf83fc800b3e260bb6e3bb7173' },
-            { date: '2015-09-21T06:47:19Z', project: 'nwq', run: 2, result: 0,   id: '58f3365f00bce1a83d9c65aeb67fd70878cb5a7d' },
-            { date: '2015-09-21T19:17:56Z', project: 'nwq', run: 3, result: 126, id: '0a2032da79dbd7226168a017f0e07e3b7c290da5' },
+            { date: '2015-09-21T20:40:41Z', project: 'nwq', run: 5, result: 1,   id: '3db02ddb4416a8d68908341aadcc598a3741ca40' },
             { date: '2015-09-21T20:02:25Z', project: 'nwq', run: 4, result: 0,   id: 'eca10c0b47721e0a91d4d6185349c00ffa87cc0b' },
-            { date: '2015-09-21T20:40:41Z', project: 'nwq', run: 5, result: 1,   id: '3db02ddb4416a8d68908341aadcc598a3741ca40' }
+            { date: '2015-09-21T19:17:56Z', project: 'nwq', run: 3, result: 126, id: '0a2032da79dbd7226168a017f0e07e3b7c290da5' },
+            { date: '2015-09-21T06:47:19Z', project: 'nwq', run: 2, result: 0,   id: '58f3365f00bce1a83d9c65aeb67fd70878cb5a7d' },
+            { date: '2015-09-20T18:38:51Z', project: 'nwq', run: 1, result: 0,   id: 'a72b9cde9aba1fdf83fc800b3e260bb6e3bb7173' }
         ]
     };
 
@@ -189,6 +189,8 @@ function presentTest(yearMonth, id, next) {
 app.get('/', getFileServeFn('index.html'));
 app.get('/index.html', getFileServeFn('index.html'));
 app.get('/index.js', getFileServeFn('index.js'));
+app.get('/vue.js', getFileServeFn('vue.js'));
+app.get('/node_modules/spectre.css/dist/spectre.css', getFileServeFn('node_modules/spectre.css/dist/spectre.css'));
 
 app.get('/api/', serve(presentLog.bind(null, undefined)));
 app.get('/api/:ym', function(req, res) {
