@@ -11,6 +11,10 @@ function renderMain() {
         return p + n;
     }
 
+    function dateToYm(d) {
+        return d.getFullYear() + "-" + pad2(d.getMonth() + 1);
+    }
+
     function getPrevious(now) {
         var ym = now.split('-').map((n) => parseInt(n, 10));
         if (ym[1] == 1) {
@@ -24,8 +28,14 @@ function renderMain() {
         return fetch('/api/' + ym);
     }
 
-    function show(project, run) {
-        alert(project + '-' + run);
+    function show(integration) {
+        var ym = dateToYm(new Date(integration.date));
+        var url = '/api/' + ym + '/' + integration.id;
+        fetch(url).then(function(resp) {
+            return resp.text();
+        }).then(function(txt) {
+            console.log(txt);
+        });
     }
 
     function hide() {

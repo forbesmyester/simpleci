@@ -2,11 +2,12 @@ var express = require('express'),
     fs = require('fs'),
     async = require('async'),
     assert = require('assert'),
+    marked = require('marked'),
     path = require('path');
 
 var app = express();
 
-const LISTEN_PORT = getEnvVar('LISTEN_PORT');
+const LISTEN_PORT = getEnvVar('SIMPLECI_LISTEN_PORT');
 const SIMPLECI_CONFIG_LOG_DIR = getEnvVar('SIMPLECI_CONFIG_LOG_DIR');
 
 class Error404 extends Error {
@@ -65,7 +66,10 @@ function readLogDir(dir, next) {
 
 function readLogFile(dir, filename, next) {
     var d = path.join(SIMPLECI_CONFIG_LOG_DIR, dir, filename);
-    fs.readFile(d, { encoding: 'utf8' }, next);
+    fs.readFile(d, { encoding: 'utf8' }, function(err, doc) {
+        if (err) { return next(err); }
+        next(err, marked(doc));
+    });
 }
 
 function getLog(yearMonth, next) {
@@ -167,6 +171,7 @@ function getFileServeFn(filename) {
 
 function presentTest(yearMonth, id, next) {
     getLog(yearMonth, function(err, log) {
+
         function filter(filename) {
             ob = testMapper(filename);
             if (id.match(/^[\d+]$/)) {
